@@ -1,0 +1,145 @@
+# Configuration file for training 6DoF pose estimation models
+# For the Bin-Picking Perception Challenge
+
+# General settings
+output_dir: "outputs"
+experiment_name: "pose_estimation_baseline"
+random_seed: 42
+
+# Data settings
+data:
+  data_dir: "/path/to/dataset"  # Path to the IPD dataset
+  train_split: "train"
+  val_split: "val"
+  use_depth: true
+  use_multiview: true
+  n_views: 3  # Number of views to use if use_multiview is true
+  
+  # Data transformation settings
+  transform:
+    normalize: true
+    random_crop: true
+    crop_size: [224, 224]
+    random_rotate: true
+    max_rotation: 15.0
+    random_flip: true
+    color_jitter:
+      brightness: 0.1
+      contrast: 0.1
+      saturation: 0.1
+      hue: 0.05
+  
+  # Validation transformations (reduced augmentation)
+  val_transform:
+    normalize: true
+    center_crop: true
+    crop_size: [224, 224]
+
+# Model settings
+model:
+  name: "pose_resnet"  # Options: pose_resnet, pose_densenet, mvpnet, one_shot_pose
+  backbone: "resnet50"  # Options: resnet18, resnet34, resnet50, resnet101
+  pretrained: true
+  freeze_backbone: false
+  
+  # Input settings
+  input_channels: 4  # 3 for RGB, 4 for RGB-D
+  
+  # Feature extractor settings
+  feature_dim: 2048
+  
+  # Pose head settings
+  rotation_representation: "quaternion"  # Options: quaternion, matrix, axis_angle
+  separate_heads: true  # Whether to use separate heads for rotation and translation
+  
+  # Multi-view settings (if use_multiview is true)
+  multiview_fusion: "max_pool"  # Options: max_pool, avg_pool, attention
+  
+  # One-shot settings (for one-shot models only)
+  one_shot_config:
+    feature_adaptation: "film"  # Options: film, weight_pred, prototypical
+    use_object_prior: true
+    prototype_dim: 512
+
+# Training settings
+training:
+  batch_size: 32
+  val_batch_size: 64
+  epochs: 100
+  learning_rate: 0.0001
+  weight_decay: 0.0001
+  optimizer: "adam"  # Options: adam, sgd
+  momentum: 0.9  # Only used for SGD
+  
+  # Learning rate scheduler
+  scheduler: "step"  # Options: step, cosine, none
+  scheduler_step_size: 30
+  scheduler_gamma: 0.1
+  scheduler_eta_min: 0.000001  # Minimum learning rate for cosine scheduler
+  
+  # Loss function
+  loss:
+    type: "pose"  # Options: pose, symmetry_aware, mssd
+    position_weight: 1.0
+    rotation_weight: 1.0
+    position_loss_fn: "l1"  # Options: l1, l2, smooth_l1
+    rotation_loss_fn: "quaternion"  # Options: quaternion, matrix, geodesic
+    use_symmetry: true
+    confidence_weight: 0.1
+  
+  # One-shot specific training parameters
+  feature_adaptation_weight: 0.1
+  domain_adaptation_weight: 0.1
+  
+  # Checkpointing
+  checkpoint_interval: 5  # Save checkpoint every N epochs
+  
+  # Hardware settings
+  num_workers: 4
+  pin_memory: true
+
+# Evaluation settings
+evaluation:
+  metrics:
+    - mssd
+    - mAP
+  normalized: true  # Whether to normalize MSSD by object diameter
+  mssd_thresholds: [0.05, 0.1, 0.2, 0.3, 0.4, 0.5]  # Thresholds for mAP calculation
+
+# Object information
+objects:
+  # Example object information for symmetry handling
+  object_info:
+    # Example cylindrical object with rotational symmetry around z-axis
+    cylinder_1:
+      diameter: 0.1  # meters
+      symmetry:
+        type: "rotational"
+        axis: [0, 0, 1]
+        num_steps: 36  # Number of discrete rotational symmetry steps
+    
+    # Example object with reflectional symmetry
+    box_1:
+      diameter: 0.15  # meters
+      symmetry:
+        type: "reflectional"
+        normal: [0, 0, 1]
+    
+    # Example object without symmetry
+    irregular_1:
+      diameter: 0.12  # meters
+      symmetry:
+        type: "none"
+
+# Memory optimization settings
+memory_optimization:
+  use_mixed_precision: true  # Use mixed precision training (float16)
+  gradient_checkpointing: false  # Trade computation for memory
+  optimize_cuda_cache: true  # Clear CUDA cache periodically
+
+# Logging and visualization
+logging:
+  log_interval: 10  # Log every N batches
+  tensorboard: true  # Use TensorBoard for logging
+  save_predictions: true  # Save example predictions during validation
+  num_vis_examples: 8  # Number of examples to visualize 

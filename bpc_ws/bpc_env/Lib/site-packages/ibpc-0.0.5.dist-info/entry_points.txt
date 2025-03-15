@@ -1,0 +1,2 @@
+[console_scripts]
+bpc = ibpc.ibpc:main

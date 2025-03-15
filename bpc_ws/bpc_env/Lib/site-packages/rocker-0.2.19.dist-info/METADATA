@@ -1,0 +1,25 @@
+Metadata-Version: 2.1
+Name: rocker
+Version: 0.2.19
+Summary: A tool to run docker containers with customized extras
+Home-page: https://github.com/osrf/rocker
+Author: Tully Foote
+Author-email: tfoote@osrfoundation.org
+License: Apache License 2.0
+Keywords: Docker
+Platform: UNKNOWN
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: Apache Software License
+Requires-Python: >=3.0
+License-File: LICENSE
+Requires-Dist: empy
+Requires-Dist: pexpect
+Requires-Dist: packaging
+Requires-Dist: urllib3
+Requires-Dist: docker
+Requires-Dist: importlib-metadata ; python_version < "3.8"
+Provides-Extra: test
+Requires-Dist: pytest ; extra == 'test'
+
+A tool to run docker containers with customized extra added like nvidia gui support overlayed.
