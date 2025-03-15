@@ -1,3 +1,126 @@
+<<<<<<< HEAD
+# Bin-Picking Perception Challenge
+
+This repository contains our solution for the Bin-Picking Perception Challenge (2025), focusing on robust 6DoF object pose estimation for industrial bin-picking applications.
+
+## Challenge Overview
+
+The Bin-Picking Perception Challenge tests the real-world robustness of 6DoF object pose estimation solutions. The competition uses Intrinsic's open-source datasets, metric methodologies, and the Flowstate work cell with a real robot to evaluate bin-picking tasks. The goal is to develop models that accurately estimate the position and orientation of objects in cluttered bin environments using the multi-view and multimodal Industrial Plenoptic Dataset (IPD).
+
+## Repository Structure
+
+```
+bin_picking_challenge/
+├── src/                  # Source code
+├── docs/                 # Documentation
+│   ├── PRD.md            # Product Requirements Document
+│   ├── DevelopmentPlan.md # Development plan
+│   └── ImplementationChecklist.md # Implementation checklist
+├── tests/                # Test suite
+├── data/                 # Dataset storage (not tracked in git)
+├── models/               # Trained model checkpoints
+├── docker/               # Docker configuration
+├── notebooks/            # Jupyter notebooks for analysis
+└── README.md             # This file
+```
+
+## Getting Started
+
+### Prerequisites
+
+- Python 3.8+
+- CUDA-compatible GPU (recommended)
+- Docker
+- ~1TB storage space for dataset and models
+
+### Installation
+
+1. Clone this repository:
+   ```
+   git clone [repository URL]
+   cd bin_picking_challenge
+   ```
+
+2. Set up the Python environment:
+   ```
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   pip install -r requirements.txt
+   ```
+
+3. Download the dataset:
+   ```
+   python src/data/download_dataset.py
+   ```
+
+## Project Phases
+
+Our development approach consists of the following phases:
+
+1. **Environment Setup and Dataset Exploration** (Weeks 1-2)
+   - Set up development environment
+   - Download and analyze the IPD dataset
+   - Explore dataset characteristics
+
+2. **Baseline Implementation** (Weeks 3-4)
+   - Implement baseline pose estimation model
+   - Set up training pipeline
+   - Create validation framework
+
+3. **Advanced Model Development** (Weeks 5-8)
+   - Implement and test multiple model architectures
+   - Develop multi-view fusion techniques
+   - Optimize for challenging cases
+
+4. **Optimization and Refinement** (Weeks 9-11)
+   - Optimize for both accuracy and speed
+   - Implement post-processing techniques
+   - Conduct comprehensive validation
+
+5. **Final Integration and Submission** (Weeks 12-13)
+   - Finalize model selection
+   - Complete documentation
+   - Prepare submission container
+
+## Documentation
+
+Comprehensive documentation is available in the `docs/` directory:
+
+- **Product Requirements Document (PRD)**: Defines the project requirements, goals, and success criteria
+- **Development Plan**: Outlines the technical approach, timeline, and resource allocation
+- **Implementation Checklist**: Tracks progress on specific implementation tasks
+
+## Model Architecture
+
+Our solution is based on [briefly describe architecture when decided]. It utilizes multimodal fusion of RGB and depth data across multiple viewpoints to accurately estimate 6DoF object poses in cluttered bin environments.
+
+Key features include:
+- Multi-view integration
+- Attention mechanisms for feature learning
+- Geometric consistency enforcement
+- Confidence-based pose refinement
+
+## Submission Format
+
+The final submission consists of a Docker container that implements the required API endpoints for the challenge evaluation system. The Docker configuration and submission instructions are available in the `docker/` directory.
+
+## References
+
+- [Official challenge repository](URL)
+- [BOP Benchmark](URL)
+- [Industrial Plenoptic Dataset (IPD)](URL)
+
+## Team
+
+- [Team Member 1] - [Role]
+- [Team Member 2] - [Role]
+- [Team Member 3] - [Role]
+- [Team Member 4] - [Role]
+
+## License
+
+[Specify license] 
+=======
 # Perception Challenge For Bin-Picking
 
 [![build_packages](https://github.com/opencv/bpc/actions/workflows/build.yaml/badge.svg?branch=main)](https://github.com/opencv/bpc/actions/workflows/build.yaml)
@@ -125,3 +248,123 @@ This will download the prebuilt zenoh, tester, and pose_estimator images and run
 [INFO] [1740003838.049547292] [bpc_pose_estimator]: Model directory set to /opt/ros/underlay/install/models.
 [INFO] [1740003838.050190130] [bpc_pose_estimator]: Pose estimates can be queried over srv /get_pose_estimates.
 ```
+### Build and test custom bpc_pose_estimator image <a name="build_custom_bpc_pe"></a>
+
+You can then build custom bpc_pose_estimator image with your updated get_pose_estimates function
+
+```bash
+cd ~/bpc_ws/bpc
+docker buildx build -t <POSE_ESTIMATOR_DOCKER_TAG> \
+    --file ./Dockerfile.estimator \
+    --build-arg="MODEL_DIR=models" \
+    .
+```
+
+and run it with the following command
+```bash
+bpc test <POSE_ESTIMATOR_DOCKER_TAG> ipd
+```
+
+For example: 
+```bash
+cd ~/bpc_ws/bpc
+docker buildx build -t bpc_pose_estimator:example \
+    --file ./Dockerfile.estimator \
+    --build-arg="MODEL_DIR=models" \
+    .
+bpc test bpc_pose_estimator:example ipd
+```
+This will validate your pose_estimator image against the local copy of validation dataset.
+When you build a new image you rerun this test.
+
+The console output will show the system getting started and then the output of the estimator. 
+
+If you would like to interact with the estimator and run alternative commands or anything else in the container you can invoke it with `--debug`
+
+The tester console output will be streamed to the file `ibpc_test_output.log` Use this to see it
+
+```bash
+tail -f ibpc_test_output.log
+```
+
+The results will come out as `submission.csv` when the tester is complete.
+
+### Baseline Solution <a name="baseline_solution"></a>
+
+We provide a simple baseline solution as a reference for implementing the solution in `ibpc_pose_estimator_py`. Please refer to the [baseline_solution](https://github.com/opencv/bpc/tree/baseline_solution) branch and follow the instructions there.
+
+
+### Tips
+
+🐌 **If you are iterating a lot of times with the validation and are frustrated by how long the cuda installation is, you can add it to your Dockerfile as below.**
+It will make the image significantly larger, but faster to iterate if you put it higher in the dockerfile. We can't include it in the published image because the image gets too big for hosting and pulling easily.
+
+```
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    wget software-properties-common gnupg2 \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN \
+  wget -q https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/cuda-keyring_1.1-1_all.deb && \
+  dpkg -i cuda-keyring_1.1-1_all.deb && \
+  rm cuda-keyring_1.1-1_all.deb && \
+  \
+  apt-get update && \
+  apt-get -y install cuda-toolkit && \
+  rm -rf /var/lib/apt/lists/*
+```
+
+## Further Details
+
+The above is enough to get you going.
+However we want to be open about what else were doing.
+You can see the source of the tester and build your own version as follows if you'd like. 
+
+### If you would like the training data and test data <a name="download_train_data"></a>
+
+Use the command:
+```bash
+bpc fetch ipd_all
+```
+The dataset is also available for manual download on [Hugging Face](https://huggingface.co/datasets/bop-benchmark/ipd).
+
+### Manually Run components 
+
+It is possible to manually run the components.
+`bpc` shows what it is running on the console output.
+Or you can run as outlined below. 
+
+
+#### Start the Zenoh router
+
+```bash
+docker run --init --rm --net host eclipse/zenoh:1.2.1 --no-multicast-scouting
+```
+
+#### Run the pose estimator
+We use [rocker](https://github.com/osrf/rocker) to add GPU support to Docker containers. To install rocker, run `pip install rocker` on the host machine.
+```bash
+rocker --nvidia --cuda --network=host bpc_pose_estimator:example
+```
+
+#### Run the tester
+
+> Note: Substitute the <PATH_TO_DATASET> with the directory that contains the [ipd](https://huggingface.co/datasets/bop-benchmark/ipd/tree/main) dataset. Similarly, substitute <PATH_TO_OUTPUT_DIR> with the directory that should contain the results from the pose estimator. By default, the results will be saved as a `submission.csv` file but this filename can be updated by setting the `OUTPUT_FILENAME` environment variable.
+
+```bash
+docker run --network=host -e BOP_PATH=/opt/ros/underlay/install/datasets -e SPLIT_TYPE=val -v<PATH_TO_DATASET>:/opt/ros/underlay/install/datasets -v<PATH_TO_OUTPUT_DIR>:/submission -it bpc_tester:latest
+```
+
+### Build the bpc_tester image
+Generally not required, but to build the tester image, run the following command:
+```bash
+cd ~/bpc_ws/bpc
+docker buildx build -t bpc_tester:latest \
+    --file ./Dockerfile.tester \
+    .
+```
+You can then use your tester image with the bpc tool, as shown in the example below:
+```bash
+bpc test bpc_pose_estimator:example ipd --tester-image bpc_tester:latest
+```
+>>>>>>> 1fcca5c936e9e6ab9b07c8c3f20395a87629a903
