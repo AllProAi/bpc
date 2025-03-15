@@ -1,121 +1,127 @@
-# Bin-Picking Perception Challenge
+# Perception Challenge For Bin-Picking
 
-This repository contains our solution for the Bin-Picking Perception Challenge (2025), focusing on robust 6DoF object pose estimation for industrial bin-picking applications.
+[![build_packages](https://github.com/opencv/bpc/actions/workflows/build.yaml/badge.svg?branch=main)](https://github.com/opencv/bpc/actions/workflows/build.yaml)
+[![style](https://github.com/opencv/bpc/actions/workflows/style.yaml/badge.svg?branch=main)](https://github.com/opencv/bpc/actions/workflows/style.yaml)
+[![test validation](https://github.com/opencv/bpc/actions/workflows/test.yaml/badge.svg?branch=main)](https://github.com/opencv/bpc/actions/workflows/test.yaml)
 
-## Challenge Overview
+Challenge [official website](https://bpc.opencv.org/).
 
-The Bin-Picking Perception Challenge tests the real-world robustness of 6DoF object pose estimation solutions. The competition uses Intrinsic's open-source datasets, metric methodologies, and the Flowstate work cell with a real robot to evaluate bin-picking tasks. The goal is to develop models that accurately estimate the position and orientation of objects in cluttered bin environments using the multi-view and multimodal Industrial Plenoptic Dataset (IPD).
+![](../media/bpc.gif)
 
-## Repository Structure
+## Key Steps for Participation
+1. [Set up the local environment](#settingup)
+2. [Download training and validation/testing data](#download_train_data)
+3. Prepare submission:
+    1. [Check the baseline solution for input/output examples](#baseline_solution)
+    2. [Build your custom image with your solution and test it locally](#build_custom_bpc_pe)
+4. [Submit your solution](#submission)
 
+## Overview
+
+This repository contains the sample submission code, ROS interfaces, and evaluation service for the Perception Challenge For Bin-Picking. The reason we openly share the tester code here is to give participants a chance to validate their submissions before submitting.
+
+- **Estimator:**
+  The estimator code represents the sample submission. Participants need to implement their solution by editing the placeholder code in the function `get_pose_estimates` in `ibpc_pose_estimator.py`. The tester will invoke the participant's solution via a ROS 2 service call over the `/get_pose_estimates` endpoint.
+
+- **Tester:**
+  The tester code serves as the evaluation service. A copy of this code will be running on the evaluation server and is provided for reference only. It loads the test dataset, prepares image inputs, invokes the estimator service repeatedly, collects the results, and submits for further evaluation.
+
+- **ROS Interface:**
+  The API for the challenge is a ROS service, [GetPoseEstimates](ibpc_interfaces/srv/GetPoseEstimates.srv), over `/get_pose_estimates`. Participants implement the service callback on a dedicated ROS node (commonly referred to as the PoseEstimatorNode) which processes the input data (images and metadata) and returns pose estimation results.
+
+In addition, we provide the [ibpc_py tool](https://github.com/opencv/bpc/tree/main/ibpc_py) which facilitates downloading the challenge data and performing various related tasks. You can find the installation guide and examples of its usage below. 
+
+## Design
+
+### ROS-based Framework
+
+The core architecture of the challenge is based on ROS 2. Participants are required to respond to a ROS 2 Service request with pose estimation results. The key elements of the architecture are:
+
+- **Service API:**
+  The ROS service interface (defined in the [GetPoseEstimates](ibpc_interfaces/srv/GetPoseEstimates.srv) file) acts as the API for the challenge.
+
+- **PoseEstimatorNode:**
+  Participants are provided with Python templates for the PoseEstimatorNode. Your task is to implement the callback function (e.g., `get_pose_estimates`) that performs the required computation. Since the API is simply a ROS endpoint, you can use any of the available [ROS 2 client libraries](https://docs.ros.org/en/jazzy/Concepts/Basic/About-Client-Libraries.html#client-libraries) including C++, Python, Rust, Node.js, or C#. Please use [ROS 2 Jazzy Jalisco](https://docs.ros.org/en/jazzy/index.html).
+
+- **TesterNode:**
+  A fully implemented TesterNode is provided that:
+  - Uses the bop_toolkit_lib to load the test dataset and prepare image inputs.
+  - Repeatedly calls the PoseEstimatorNode service over the `/get_pose_estimates` endpoint.
+  - Collects and combines results from multiple service calls.
+  - Saves the compiled results to disk in CSV format.
+
+### Containerization
+
+To simplify the evaluation process, Dockerfiles are provided to generate container images for both the PoseEstimatorNode and the TesterNode. This ensures that users can run their models without having to configure a dedicated ROS environment manually.
+
+## Submission Instructions <a name="submission"></a>
+
+Participants are expected to modify the estimator code to implement their solution. Once completed, your custom estimator should be containerized using Docker and submitted according to the challenge requirements. You can find detailed submission instructions [here](https://bpc.opencv.org/web/challenges/challenge-page/1/submission). Please make sure to register a team to get access to the submission instructions. 
+
+## Setting up <a name="settingup"></a>
+
+The following instructions will guide you through the process of validating your submission locally before official submission.
+
+#### Requirements
+
+- [Docker](https://docs.docker.com/) installed with the user in docker group for passwordless invocations. Ensure Docker Buildx is installed (`docker buildx version`). If not, install it with `apt install docker-buildx-plugin` or `apt install docker-buildx` (distribution-dependent). 
+- 7z -- `apt install p7zip-full`
+- Python3 with virtualenv  -- `apt install python3-virtualenv`
+- The `ibpc` and `rocker` CLI tools are tested on Linux-based machines. Due to known Windows issues, we recommend Windows users develop using [WSL](https://learn.microsoft.com/en-us/windows/wsl/about).
+
+> Note: Participants are expected to submit Docker containers, so all development workflows are designed with this in mind.
+
+#### Setup a workspace
+```bash
+mkdir -p ~/bpc_ws
 ```
-bin_picking_challenge/
-├── src/                  # Source code
-├── docs/                 # Documentation
-│   ├── PRD.md            # Product Requirements Document
-│   ├── DevelopmentPlan.md # Development plan
-│   └── ImplementationChecklist.md # Implementation checklist
-├── tests/                # Test suite
-├── data/                 # Dataset storage (not tracked in git)
-├── models/               # Trained model checkpoints
-├── docker/               # Docker configuration
-├── notebooks/            # Jupyter notebooks for analysis
-└── README.md             # This file
+
+#### Create a virtual environment 
+
+📄 If you're already working in some form of virtualenv you can continue to use that and install `bpc` in that instead of making a new one. 
+
+```bash
+python3 -m venv ~/bpc_ws/bpc_env
 ```
 
-## Getting Started
+#### Activate that virtual env
 
-### Prerequisites
+```bash
+source ~/bpc_ws/bpc_env/bin/activate
+```
 
-- Python 3.8+
-- CUDA-compatible GPU (recommended)
-- Docker
-- ~1TB storage space for dataset and models
+For any new shell interacting with the `bpc` command you will have to rerun this source command.
 
-### Installation
+#### Install bpc 
 
-1. Clone this repository:
-   ```
-   git clone [repository URL]
-   cd bin_picking_challenge
-   ```
+Install the bpc command from the ibpc pypi package. (bpc was already taken :-( )
 
-2. Set up the Python environment:
-   ```
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   pip install -r requirements.txt
-   ```
+```bash
+pip install ibpc
+```
 
-3. Download the dataset:
-   ```
-   python src/data/download_dataset.py
-   ```
+#### Fetch the source repository
 
-## Project Phases
+```bash
+cd ~/bpc_ws
+git clone https://github.com/opencv/bpc.git
+```
 
-Our development approach consists of the following phases:
+#### Fetch the dataset
 
-1. **Environment Setup and Dataset Exploration** (Weeks 1-2)
-   - Set up development environment
-   - Download and analyze the IPD dataset
-   - Explore dataset characteristics
+```bash
+cd ~/bpc_ws/bpc
+bpc fetch ipd
+```
+This will download the ipd_base.zip, ipd_models.zip, and ipd_val.zip (approximately 6GB combined). The dataset is also available for manual download on [Hugging Face](https://huggingface.co/datasets/bop-benchmark/ipd).
 
-2. **Baseline Implementation** (Weeks 3-4)
-   - Implement baseline pose estimation model
-   - Set up training pipeline
-   - Create validation framework
-
-3. **Advanced Model Development** (Weeks 5-8)
-   - Implement and test multiple model architectures
-   - Develop multi-view fusion techniques
-   - Optimize for challenging cases
-
-4. **Optimization and Refinement** (Weeks 9-11)
-   - Optimize for both accuracy and speed
-   - Implement post-processing techniques
-   - Conduct comprehensive validation
-
-5. **Final Integration and Submission** (Weeks 12-13)
-   - Finalize model selection
-   - Complete documentation
-   - Prepare submission container
-
-## Documentation
-
-Comprehensive documentation is available in the `docs/` directory:
-
-- **Product Requirements Document (PRD)**: Defines the project requirements, goals, and success criteria
-- **Development Plan**: Outlines the technical approach, timeline, and resource allocation
-- **Implementation Checklist**: Tracks progress on specific implementation tasks
-
-## Model Architecture
-
-Our solution is based on [briefly describe architecture when decided]. It utilizes multimodal fusion of RGB and depth data across multiple viewpoints to accurately estimate 6DoF object poses in cluttered bin environments.
-
-Key features include:
-- Multi-view integration
-- Attention mechanisms for feature learning
-- Geometric consistency enforcement
-- Confidence-based pose refinement
-
-## Submission Format
-
-The final submission consists of a Docker container that implements the required API endpoints for the challenge evaluation system. The Docker configuration and submission instructions are available in the `docker/` directory.
-
-## References
-
-- [Official challenge repository](URL)
-- [BOP Benchmark](URL)
-- [Industrial Plenoptic Dataset (IPD)](URL)
-
-## Team
-
-- [Team Member 1] - [Role]
-- [Team Member 2] - [Role]
-- [Team Member 3] - [Role]
-- [Team Member 4] - [Role]
-
-## License
-
-[Specify license] 
+#### Quickstart with prebuilt images
+```bash
+bpc test ghcr.io/opencv/bpc/bpc_pose_estimator:example ipd
+```
+This will download the prebuilt zenoh, tester, and pose_estimator images and run containers based on them. The pose_estimator image contains an empty get_pose_estimates function. After the containers start, you should see the following in your terminal:
+```
+[INFO] [1740003838.048516355] [bpc_pose_estimator]: Starting bpc_pose_estimator...
+[INFO] [1740003838.049547292] [bpc_pose_estimator]: Model directory set to /opt/ros/underlay/install/models.
+[INFO] [1740003838.050190130] [bpc_pose_estimator]: Pose estimates can be queried over srv /get_pose_estimates.
+```
