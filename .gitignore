@@ -1,8 +1,56 @@
-ibpc_pose_estimator_py/ibpc_pose_estimator_py/__pycache__/
-ibpc_tester/ibpc_tester/__pycache__/
-models/
-*.__pycache__
-*.pyc
-*.egg-info
+# Data directories - exclude raw data but keep processed/essential data
+ipd_data/raw/
+ipd_data/test/
+ipd_data/val/
+ipd_data/train/
+
+# Large data files
+ipd_data/ipd_val.zip
+ipd_data/ipd/val/
+
+# Keep essential files
+!ipd_data/ipd/models/
+!ipd_data/ipd/models_eval/
+!ipd_data/ipd_models.zip
+!ipd_data/ipd_base.zip
+!ipd_data/ipd/*.json
+!ipd_data/ipd/*.md
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
 dist/
-*.log
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+.env
+.venv
+env/
+venv/
+ENV/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
