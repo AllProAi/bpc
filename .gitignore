@@ -16,6 +16,28 @@ ipd_data/ipd/val/
 !ipd_data/ipd/*.json
 !ipd_data/ipd/*.md
 
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Hugging Face cache
+.cache/
+.huggingface/
+
+# Large data files
+*.h5
+*.hdf5
+*.pkl
+*.pth
+*.onnx
+*.pt
+*.bin
+*.npy
+*.npz
+data/
+!data/samples/
+
 # Python
 __pycache__/
 *.py[cod]
@@ -38,13 +60,6 @@ wheels/
 .installed.cfg
 *.egg
 
-# Virtual Environment
-.env
-.venv
-env/
-venv/
-ENV/
-
 # IDE
 .idea/
 .vscode/
@@ -54,3 +69,30 @@ ENV/
 # OS
 .DS_Store
 Thumbs.db
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Test coverage
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# Virtual Environment
+venv/
+env/
+ENV/
